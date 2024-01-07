@@ -23,7 +23,7 @@ export class SerializeInterceptor implements NestInterceptor {
         : Observable<any> | Promise<Observable<any>> {
         return next.handle().pipe(
             map((data: any) => {
-                return plainToClass(this.dto, data, {
+                return plainToClass(this.dto as any, data, {
                     excludeExtraneousValues: true
                 })
             })
