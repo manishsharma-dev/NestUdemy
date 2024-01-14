@@ -10,15 +10,17 @@ describe('AuthService', () => {
 
     beforeEach(async () => {
         //fake copy of users service
+        const users: User[] = [];
         fakeUsersService = {
-            find: () => Promise.resolve([]),
-            create: (email: string, password: string) => Promise.resolve(
-                {
-                    id: 1,
-                    email,
-                    password
-                } as User
-            )
+            find: (email) => {
+                const filteredUsers: User[] = users.filter(user => user.email === email);
+                return Promise.resolve(filteredUsers);
+            },
+            create: (email: string, password: string) => {
+                const user = { id : Math.floor(Math.random() * 99999), email, password} as User;
+                users.push(user);
+                return Promise.resolve(user);
+            }
         }
         const module = await Test.createTestingModule({
             providers: [
@@ -45,7 +47,7 @@ describe('AuthService', () => {
     })
 
     it('throws an error if user signs up with email that is in use', async () => {
-        fakeUsersService.find = () => Promise.resolve([{ id: 1, email: 'a', password: '1' } as User])
+        await service.signup('asdf@asdf.com', 'asdf');
         await expect(service.signup('asdf@asdf.com', 'asdf')).rejects.toThrow(
             BadRequestException,
         );
@@ -53,29 +55,24 @@ describe('AuthService', () => {
 
     it('throws if signin is called with an unused email', async () => {
         await expect(
-            service.signin('asdflkj@asdlfkj.com', 'passdflkj'),
-        ).rejects.toThrow(NotFoundException);
+            service.signin('hr@taskly.com', 'hr123'),
+          ).rejects.toThrow(NotFoundException);
     });
 
     it('throws if an invalid password is provided', async () => {
-        fakeUsersService.find = () =>
-            Promise.resolve([
-                { email: 'hr@taskly.com', password: 'hr123' } as User,
-            ]);
+        await service.signup('laskdjf@alskdfj.com', 'password');
         await expect(
-            service.signin('hr@taskly.com', 'hr123'),
+          service.signin('laskdjf@alskdfj.com', 'laksdlfkj'),
         ).rejects.toThrow(BadRequestException);
     });
 
-    it('return a user if a correct user is provided', async () => {
-        fakeUsersService.find = () =>
-            Promise.resolve([
-                { email: 'hr@taskly.com', password: '1f57d5edf19b7c12.4f1640aef48b8572e79a474d02631f1546f528debfc0ea2ccae9fe2f00e9fc63' } as User,
-            ]);
+    it('return a user if a correct user is provided', async () => {       
 
-        const user = service.signin('hr@taskly.com', 'hr123');
+        await service.signup('manish@taskly.com', 'manish');
+
+        const user = service.signin('manish@taskly.com', 'manish');
         expect(user).toBeDefined();
-        
+
     })
 
 })
